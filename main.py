@@ -27,7 +27,6 @@ def connect_to_odoo():
         if not uid:
             return None, "No se pudo autenticar con Odoo", 403
         models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
-        # --- CAMBIO #1: DEVOLVER 'db' JUNTO CON LOS OTROS VALORES ---
         return common, models, uid, password, db
     except Exception as e:
         return None, f"Error al conectar con Odoo: {e}", 500
@@ -44,7 +43,6 @@ def obtener_totales_csv():
     except ValueError:
         return "Formato de fecha incorrecto (YYYY-MM-DD)", 400
 
-    # --- CAMBIO #2: RECIBIR 'db' EN LA LLAMADA ---
     common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
@@ -81,7 +79,6 @@ def obtener_kilos_por_orden_csv():
     except ValueError:
         return "Formato de fecha incorrecto (YYYY-MM-DD)", 400
 
-    # --- CAMBIO #3: RECIBIR 'db' EN LA LLAMADA ---
     common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
@@ -107,6 +104,9 @@ def obtener_kilos_por_orden_csv():
                     'kilos_total_orden': total_kilos
                 })
         return jsonify(resultado)
+    except xmlrpc.client.Fault as e:
+        # Aquí capturamos la traza de Odoo para obtener el error completo
+        return f"Error al procesar la solicitud: {e.args}", 500
     except Exception as e:
         return f"Error al procesar la solicitud: {e}", 500
 
@@ -130,7 +130,6 @@ def obtener_kilos_por_mes_csv():
     primer_dia_mes = date(anio, mes, 1)
     ultimo_dia_mes = date(anio, mes, calendar.monthrange(anio, mes)[1])
 
-    # --- CAMBIO #4: RECIBIR 'db' EN LA LLAMADA ---
     common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
@@ -154,6 +153,9 @@ def obtener_kilos_por_mes_csv():
         
         resultado_mensual = [{'mes': mes, 'anio': anio, 'sucursal': sucursal, 'kilos_total_mes': kilos} for sucursal, kilos in kilos_por_sucursal_mensual.items()]
         return jsonify(resultado_mensual)
+    except xmlrpc.client.Fault as e:
+        # Aquí capturamos la traza de Odoo para obtener el error completo
+        return f"Error al procesar la solicitud mensual desde Odoo: {e.args}", 500
     except Exception as e:
         return f"Error al procesar la solicitud mensual desde Odoo: {e}", 500
 
