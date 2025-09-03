@@ -11,10 +11,10 @@ app = Flask(__name__)
 def connect_to_odoo():
     """
     Establece conexión y autenticación con Odoo.
-    Retorna (common, models, uid, password) o (None, mensaje_error, codigo_http).
+    Retorna (common, models, uid, password, db) o (None, mensaje_error, codigo_http).
     """
     url = os.environ.get("ODOO_URL")
-    db = os.environ.get("ODOO_DB")
+    db = os.environ.get("ODOO_DB") # Esta variable se lee correctamente aquí
     username = os.environ.get("ODOO_USERNAME")
     password = os.environ.get("ODOO_PASSWORD")
 
@@ -27,7 +27,8 @@ def connect_to_odoo():
         if not uid:
             return None, "No se pudo autenticar con Odoo", 403
         models = xmlrpc.client.ServerProxy(f"{url}/xmlrpc/2/object")
-        return common, models, uid, password
+        # --- CAMBIO #1: DEVOLVER 'db' JUNTO CON LOS OTROS VALORES ---
+        return common, models, uid, password, db
     except Exception as e:
         return None, f"Error al conectar con Odoo: {e}", 500
 
@@ -43,7 +44,8 @@ def obtener_totales_csv():
     except ValueError:
         return "Formato de fecha incorrecto (YYYY-MM-DD)", 400
 
-    common, models, uid, password = connect_to_odoo()
+    # --- CAMBIO #2: RECIBIR 'db' EN LA LLAMADA ---
+    common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
 
@@ -79,7 +81,8 @@ def obtener_kilos_por_orden_csv():
     except ValueError:
         return "Formato de fecha incorrecto (YYYY-MM-DD)", 400
 
-    common, models, uid, password = connect_to_odoo()
+    # --- CAMBIO #3: RECIBIR 'db' EN LA LLAMADA ---
+    common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
 
@@ -127,7 +130,8 @@ def obtener_kilos_por_mes_csv():
     primer_dia_mes = date(anio, mes, 1)
     ultimo_dia_mes = date(anio, mes, calendar.monthrange(anio, mes)[1])
 
-    common, models, uid, password = connect_to_odoo()
+    # --- CAMBIO #4: RECIBIR 'db' EN LA LLAMADA ---
+    common, models, uid, password, db = connect_to_odoo()
     if common is None:
         return models, uid
 
@@ -156,3 +160,4 @@ def obtener_kilos_por_mes_csv():
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
+
